@@ -1,0 +1,7 @@
+models/
+saida/
+teste/
+trabalhos/*/
+!trabalhos/.gitkeep
+__pycache__/
+*.wav
