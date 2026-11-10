@@ -66,8 +66,46 @@ def limpa(palavra):
 
 
 # ---------------------------------------------------------------- voz e transcrição
-def gerar_voz(texto, saida, velocidade=1.0):
-    """Texto -> WAV com voz portuguesa (Piper, corre localmente)."""
+VOZES_ONLINE = {
+    "raquel": "pt-PT-RaquelNeural",   # feminina PT-PT (gratuita, online)
+    "duarte": "pt-PT-DuarteNeural",   # masculina PT-PT (gratuita, online)
+}
+
+
+def gerar_voz(texto, saida, velocidade=1.0, voz="raquel"):
+    """Texto -> WAV. Vozes online gratuitas (Raquel/Duarte) ou 'offline' (Piper, local)."""
+    if voz in VOZES_ONLINE:
+        import time
+        for tentativa in range(3):
+            try:
+                return gerar_voz_online(texto, saida, velocidade, VOZES_ONLINE[voz])
+            except Exception as e:  # falha momentânea -> tenta de novo
+                erro = type(e).__name__
+                time.sleep(2 * (tentativa + 1))
+        info(f"  voz online indisponível ({erro}); a usar a voz local")
+    return gerar_voz_piper(texto, saida, velocidade)
+
+
+def gerar_voz_online(texto, saida, velocidade, nome):
+    import asyncio
+    import ssl
+
+    import edge_tts
+    import edge_tts.communicate as com
+
+    ca = "/root/.ccr/ca-bundle.crt"  # certificado do proxy dos ambientes cloud
+    if os.path.exists(ca):
+        com._SSL_CTX = ssl.create_default_context(cafile=ca)
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    taxa = f"{round((velocidade - 1) * 100):+d}%"
+    mp3 = Path(str(saida) + ".mp3")
+    asyncio.run(edge_tts.Communicate(texto, nome, rate=taxa, proxy=proxy).save(str(mp3)))
+    corre(["ffmpeg", "-y", "-i", str(mp3), "-ar", "24000", "-ac", "1", str(saida)])
+    mp3.unlink()
+
+
+def gerar_voz_piper(texto, saida, velocidade=1.0):
+    """Voz masculina PT-PT que corre localmente, sem internet."""
     from piper import PiperVoice
     from piper.config import SynthesisConfig
 
@@ -415,7 +453,7 @@ def cmd_faceless(a):
         roteiro = Path(a.roteiro).read_text(encoding="utf-8").strip()
         voz = tmp / "voz.wav"
         info("A gerar a narração em português de Portugal…")
-        gerar_voz(roteiro, voz, a.velocidade)
+        gerar_voz(roteiro, voz, a.velocidade, a.voz)
     dur = duracao(voz) + 0.4
     info("A transcrever com tempos palavra a palavra…")
     palavras = transcrever(voz, roteiro, a.modelo)
@@ -505,6 +543,8 @@ def main():
     f.add_argument("--broll", help="pasta com vídeos/imagens")
     f.add_argument("--ritmo", type=float, default=2.8, help="segundos por corte de b-roll")
     f.add_argument("--velocidade", type=float, default=1.08, help="velocidade da voz automática")
+    f.add_argument("--voz", default="raquel", choices=["raquel", "duarte", "offline"],
+                   help="raquel = feminina PT-PT; duarte = masculina PT-PT; offline = voz local")
     comuns(f)
     f.set_defaults(func=cmd_faceless)
 

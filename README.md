@@ -2,7 +2,7 @@
 
 Editor automático de reels verticais (1080×1920) com legendas animadas palavra a palavra,
 emojis, zooms, gancho, CTA, barra de progresso e música com ducking. Tudo corre localmente
-(FFmpeg + Whisper + voz Piper PT-PT), sem custos por vídeo.
+(FFmpeg + Whisper), sem custos por vídeo. Voz automática feminina PT-PT (Raquel) gratuita.
 
 ## Instalar
 ```bash

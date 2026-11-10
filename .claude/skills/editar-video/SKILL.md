@@ -41,6 +41,8 @@ Regras: as palavras do plano têm de existir no texto falado (o motor compara se
 ```
 python3 studio.py faceless --roteiro trabalhos/X/roteiro.txt --plano trabalhos/X/plano.json --estilo sfa -o trabalhos/X/reel.mp4
 ```
+Voz automática: `--voz raquel` (feminina PT-PT, padrão), `--voz duarte` (masculina) ou `--voz offline`
+(local, sem internet). Se a voz online falhar, o motor usa a local sozinho.
 Opções úteis: `--musica musica.mp3` (baixa sozinha quando há voz), `--ritmo 2` (cortes de b-roll mais
 rápidos), `--velocidade 1.12` (voz mais rápida), `--modelo medium` (transcrição mais exata, mais lenta),
 `--enquadramento desfocado` (talking-head horizontal com fundo desfocado).
